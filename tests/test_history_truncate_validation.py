@@ -47,6 +47,7 @@ def saved_messages(database):
     {"keep_count": 1.9}, {"keep_count": -1}, {"keep_count": "bad"},
     {"keep_count": []}, {"keep_count": {}},
     {"before_msg_id": True}, {"before_msg_id": ["message"]},
+    {"before_msg_id": False}, {"before_msg_id": 0}, {"message_id": 0},
     [], None, "two", 2, False,
 ])
 def test_invalid_target_preserves_history(history_client, payload):
