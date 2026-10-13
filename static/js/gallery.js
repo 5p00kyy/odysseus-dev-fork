@@ -1278,6 +1278,7 @@ function _renderEditorLanding() {
       <p>Start a blank canvas, or open a photo from your gallery to edit it.</p>
       <div class="gallery-editor-landing-actions">
         <button class="gallery-select-btn" id="gallery-editor-new">New canvas...</button>
+        <button class="gallery-select-btn" id="gallery-editor-import"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-4"/><path d="M3 15v4a2 2 0 0 0 2 2"/></svg>Import</button>
         <button class="gallery-select-btn" id="gallery-editor-pick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Browse gallery</button>
       </div>
       <section class="gallery-editor-template-picker" aria-labelledby="gallery-editor-template-title">
@@ -1328,6 +1329,28 @@ function _renderEditorLanding() {
   document.getElementById('gallery-editor-pick')?.addEventListener('click', () => {
     document.querySelector('#gallery-modal .gallery-tab[data-tab="images"]')?.click();
   });
+  document.getElementById('gallery-editor-import')?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const name = (file.name || 'Imported image').replace(/\.[^.]+$/, '') || 'Imported image';
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          await openEditor(reader.result, null, null, name);
+        } catch (e) {
+          console.error('[gallery] image import failed', e);
+          uiModule?.showError?.('Could not import that image');
+        }
+      };
+      reader.onerror = () => uiModule?.showError?.('Could not read that file');
+      reader.readAsDataURL(file);
+    });
+    input.click();
+  });
 }
 
 // Wire the first-tile Upload affordance in the Photos grid. Opens the same
@@ -1350,6 +1373,11 @@ function _wireUploadTile() {
       if (files.length) _bulkUpload(files, _activeAlbum);
     });
     input.click();
+  });
+  tile.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    e.preventDefault();
+    tile.click();
   });
 }
 
@@ -1376,7 +1404,7 @@ function _renderGrid() {
   // tile in the Albums tab so the upload entry point is consistent across
   // both grids.
   const uploadTile = `
-    <div class="gallery-card gallery-card-upload" id="gallery-upload-tile" title="Upload photos or videos">
+    <div class="gallery-card gallery-card-upload" id="gallery-upload-tile" title="Upload photos or videos" tabindex="0" role="button" aria-label="Upload photos or videos">
       <div class="gallery-card-upload-inner">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <div class="gallery-card-upload-label">Upload</div>
@@ -1415,10 +1443,10 @@ function _renderGrid() {
       _isVideoUrl(img.url) ? '<span class="gallery-card-badge">Video</span>' : '',
     ].filter(Boolean).join('');
     html += `
-      <div class="gallery-card" data-id="${_esc(img.id)}">
+      <div class="gallery-card" data-id="${_esc(img.id)}" tabindex="0" role="button" aria-label="${_esc(labelText)}">
         <span class="gallery-select-dot" style="display:none;"></span>
-        <button class="gallery-fav-btn${favCls}" data-id="${_esc(img.id)}" title="Favorite">&#9829;</button>
-        <button class="gallery-dl-btn" data-id="${_esc(img.id)}" data-url="${_esc(img.url)}" data-filename="${_esc(img.filename || '')}" title="Download">
+        <button class="gallery-fav-btn${favCls}" data-id="${_esc(img.id)}" title="Favorite" aria-label="Favorite" aria-pressed="${favCls ? 'true' : 'false'}">&#9829;</button>
+        <button class="gallery-dl-btn" data-id="${_esc(img.id)}" data-url="${_esc(img.url)}" data-filename="${_esc(img.filename || '')}" title="Download" aria-label="Download">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
         ${_isVideoUrl(img.url)
@@ -1459,6 +1487,14 @@ function _renderGrid() {
     card.addEventListener('click', (e) => {
       if (e.target.closest('.gallery-fav-btn')) return;
       if (e.target.closest('.gallery-dl-btn')) return;
+      const selectBtn = document.getElementById('gallery-select-btn');
+      if (selectBtn && selectBtn.classList.contains('active')) return;
+      const img = _items.find(i => i.id === card.dataset.id);
+      if (img) _openDetail(img);
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+      e.preventDefault();
       const selectBtn = document.getElementById('gallery-select-btn');
       if (selectBtn && selectBtn.classList.contains('active')) return;
       const img = _items.find(i => i.id === card.dataset.id);
@@ -1575,7 +1611,7 @@ function _openDetail(img) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="${img.favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </button>
       <div class="gallery-detail-menu-wrap">
-        <button class="gallery-detail-action gallery-detail-menu-btn" id="gallery-detail-menu-btn" title="Actions" aria-label="Photo actions">
+        <button class="gallery-detail-action gallery-detail-menu-btn" id="gallery-detail-menu-btn" title="Actions" aria-label="Photo actions" aria-haspopup="menu" aria-expanded="false">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
         </button>
         <div class="gallery-detail-menu dropdown" id="gallery-detail-menu" hidden>
@@ -1804,7 +1840,7 @@ function _openDetail(img) {
   const menu = document.getElementById('gallery-detail-menu');
   if (menuBtn && menu) {
     // `.dropdown { display:none }` isn't tied to [hidden] — set inline display.
-    const _setMenu = (show) => { menu.hidden = !show; menu.style.display = show ? 'block' : 'none'; };
+    const _setMenu = (show) => { menu.hidden = !show; menu.style.display = show ? 'block' : 'none'; menuBtn.setAttribute('aria-expanded', show ? 'true' : 'false'); };
     _setMenu(false);
     menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2235,7 +2271,7 @@ export function openGallery() {
     <div class="modal-content gallery-modal-content">
       <div class="modal-header">
         <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Gallery <span id="gallery-stats" class="memory-count" style="font-size:0.6em;opacity:0.6;font-weight:normal;margin-left:8px"></span></h4>
-        <button class="modal-close" id="gallery-close">&times;</button>
+        <button class="modal-close" id="gallery-close" aria-label="Close">&times;</button>
       </div>
       <div class="gallery-tabs">
         <button class="gallery-tab active" data-tab="images">
@@ -2251,6 +2287,7 @@ export function openGallery() {
           <span class="gallery-tab-label">Edit</span>
           <span class="gallery-tab-close" id="gallery-editor-tab-close" title="Close edit" aria-label="Close edit">×</span>
         </button>
+        <span class="gallery-editor-tabs-extra" id="gallery-editor-tabs-extra"></span>
         <button class="gallery-tab" data-tab="settings">
           <span class="gallery-tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
           <span class="gallery-tab-label">Settings</span>
@@ -2317,6 +2354,13 @@ export function openGallery() {
                 Start AI tag
               </button>
             </div>
+          </div>
+          <div class="admin-card">
+            <h2>Image model</h2>
+            <p class="memory-desc doclib-desc">Model used for AI edits and generated content in the editor (Quick Edit). Shared with the Quick Edit model picker.</p>
+            <select id="gallery-image-model" style="margin-top:8px;width:100%;">
+              <option value="">Loading…</option>
+            </select>
           </div>
         </div>
       </div>
@@ -2557,6 +2601,52 @@ export function openGallery() {
       }).catch(() => {});
     });
   }
+
+  // ── Image model (Settings tab) ──
+  // Mirror of the Quick Edit picker: same source (GET /api/editor/image-models)
+  // and the SAME localStorage key `ge-ai-command-model` (value `<base_url>::<id>`)
+  // so the two stay in sync.
+  const _GE_MODEL_KEY = 'ge-ai-command-model';
+  const imageModelSelect = document.getElementById('gallery-image-model');
+  if (imageModelSelect) {
+    const _fillImageModels = async () => {
+      try {
+        const r = await fetch(`${API_BASE}/api/editor/image-models`, { credentials: 'same-origin' });
+        const data = r.ok ? await r.json() : null;
+        const models = (data && Array.isArray(data.models)) ? data.models : [];
+        const saved = localStorage.getItem(_GE_MODEL_KEY) || '';
+        imageModelSelect.innerHTML = '';
+        const def = document.createElement('option');
+        def.value = '';
+        def.textContent = 'Default (configured provider)';
+        imageModelSelect.appendChild(def);
+        for (const m of models) {
+          const opt = document.createElement('option');
+          opt.value = `${m.base_url || ''}::${m.id}`;
+          opt.textContent = `${m.id} · ${m.provider || ''} (${m.kind || 'edit'})`.trim();
+          imageModelSelect.appendChild(opt);
+        }
+        imageModelSelect.value = saved;
+        if (imageModelSelect.value !== saved) imageModelSelect.value = '';
+      } catch (e) {
+        imageModelSelect.innerHTML = '<option value="">Default (configured provider)</option>';
+      }
+    };
+    imageModelSelect.addEventListener('change', () => {
+      const val = imageModelSelect.value || '';
+      try {
+        if (val) localStorage.setItem(_GE_MODEL_KEY, val);
+        else localStorage.removeItem(_GE_MODEL_KEY);
+      } catch (e) {}
+      window.dispatchEvent(new CustomEvent('ge-ai-command-model-change', { detail: { value: val } }));
+    });
+    _fillImageModels();
+  }
+  window.addEventListener('storage', (e) => {
+    if (e && e.key === _GE_MODEL_KEY && imageModelSelect) {
+      imageModelSelect.value = e.newValue || '';
+    }
+  });
 
   // ── Tag All Untagged ──
   let _tagCancelRequested = false;

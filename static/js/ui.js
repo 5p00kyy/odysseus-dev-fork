@@ -31,9 +31,33 @@ function _targetEl(target) {
   return target && target.nodeType === 1 ? target : target?.parentElement || null;
 }
 
+function _editorPanelVisible() {
+  if (!document.body || !document.body.classList.contains('ge-editor-open')) return false;
+  const sel = '.ge-adj-popup, .ge-fx-popup, .ge-fx-menu, .ge-transform-popup, .ge-filter-overlay, .ge-history-panel';
+  return [...document.querySelectorAll(sel)].some((candidate) => {
+    if (!document.contains(candidate)) return false;
+    const style = getComputedStyle(candidate);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    const rect = candidate.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+}
+
 function _positionToastForOpenPanel(el) {
   if (!el) return;
   const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+  el.classList.remove('toast-editor-bottom');
+  // In the editor, a floating panel (Adjust/Develop, FX, Transform, filter
+  // modal, History) is anchored to the top/right; drop the toast to the
+  // bottom-centre so it can never cover a control (EVAL: "never over an
+  // active panel"). On phones the CSS already anchors it at the bottom.
+  if (_editorPanelVisible()) {
+    el.style.left = '';
+    el.style.right = '';
+    el.style.maxWidth = '';
+    el.classList.add('toast-editor-bottom');
+    return;
+  }
   const panel = [...document.querySelectorAll('.notes-pane')]
     .filter((candidate) => {
       if (!document.contains(candidate)) return false;
@@ -357,6 +381,14 @@ export function showToast(msg, durationOrOpts) {
     aiReplyResult = !!durationOrOpts.aiReplyResult;
   } else if (typeof durationOrOpts === 'number') {
     duration = durationOrOpts;
+  }
+  // While the editor is open, cap every toast so it auto-dismisses within
+  // ~2.5s and can never linger over the canvas or a panel (EVAL: "auto-dismiss
+  // in 2.5s"). Longer informational durations (persist warnings etc.) are
+  // still readable but do not pile up.
+  if (typeof document !== 'undefined' && document.body
+      && document.body.classList.contains('ge-editor-open')) {
+    duration = Math.min(duration, 2500);
   }
   if (aiReplyProgress) toastEl.classList.add('toast-ai-reply-progress');
   if (aiReplyResult) toastEl.classList.add('toast-ai-reply-result');

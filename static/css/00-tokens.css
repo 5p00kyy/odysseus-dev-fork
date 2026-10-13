@@ -130,10 +130,29 @@ body {
 @font-face { font-family: 'Fira Code'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/FiraCode-Regular.woff2') format('woff2'); }
 @font-face { font-family: 'Fira Code'; font-weight: 600; font-style: normal; font-display: swap; src: url('/static/fonts/FiraCode-SemiBold.woff2') format('woff2'); }
 
+/* GohuFont is the default UI face across themes; keep the shipped font local
+   so the default is available before custom-font discovery completes. */
+@font-face { font-family: 'GohuFont'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/custom/GohuFont.ttf') format('truetype'); }
 
 /* Self-hosted OpenDyslexic — dyslexia-friendly accessibility font option (SIL OFL 1.1) */
 @font-face { font-family: 'OpenDyslexic'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/OpenDyslexic-Regular.woff2') format('woff2'); }
 @font-face { font-family: 'OpenDyslexic'; font-weight: 700; font-style: normal; font-display: swap; src: url('/static/fonts/OpenDyslexic-Bold.woff2') format('woff2'); }
+
+/* Self-hosted editor text fonts (SIL OFL 1.1). These are bundled so the text
+   tool renders distinct, expected faces on every device — phones (Android/iOS)
+   do not ship Arial/Verdana/Georgia/Times/Courier/Impact, which previously
+   collapsed every font choice onto the same system fallback. */
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/Inter-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; font-display: swap; src: url('/static/fonts/Inter-Medium.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: swap; src: url('/static/fonts/Inter-SemiBold.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/Roboto-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto'; font-weight: 700; font-style: normal; font-display: swap; src: url('/static/fonts/Roboto-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'Playfair Display'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/PlayfairDisplay-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Playfair Display'; font-weight: 700; font-style: normal; font-display: swap; src: url('/static/fonts/PlayfairDisplay-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'Lobster'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/Lobster-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Bebas Neue'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/BebasNeue-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-weight: 400; font-style: normal; font-display: swap; src: url('/static/fonts/RobotoMono-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-weight: 700; font-style: normal; font-display: swap; src: url('/static/fonts/RobotoMono-Bold.woff2') format('woff2'); }
 
 /* Code block baseline */
 pre, code, .hljs {

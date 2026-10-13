@@ -582,13 +582,19 @@ export async function refreshModels(force = false, opts = {}) {
       noModels.className = 'models-empty-state';
       if (window._isAdmin) {
         noModels.innerHTML = '<span class="muted">No models found</span><br>'
-          + '<a href="#" onclick="document.getElementById(\'user-bar-admin\')?.click();return false;" class="accent-link">Open Admin to add endpoints</a>'
+          + '<a href="#" id="models-open-admin" class="accent-link">Open Admin to add endpoints</a>'
           + '<br><span class="muted-sm">Type /setup for Local models or API setup.</span>';
       } else {
         noModels.innerHTML = '<span class="muted">No models available</span><br>'
           + '<span class="muted-sm">Ask an admin to configure model endpoints</span>';
       }
       box.appendChild(noModels);
+      const openAdmin = noModels.querySelector('#models-open-admin');
+      if (openAdmin) openAdmin.addEventListener('click', (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('user-bar-admin');
+        if (btn) btn.click();
+      });
     }
   } catch (e) {
     console.error(e);

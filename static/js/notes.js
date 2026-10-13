@@ -542,7 +542,7 @@ function _linkify(s) {
       url = url.slice(0, -1);
     }
     const href = url.startsWith('www.') ? `https://${url}` : url;
-    return `<a href="${_attrEsc(href)}" class="note-link" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${url}</a>` + (url !== m ? m.slice(url.length) : '');
+    return `<a href="${_attrEsc(href)}" class="note-link" target="_blank" rel="noopener noreferrer">${url}</a>` + (url !== m ? m.slice(url.length) : '');
   });
 }
 function _uid() { return Math.random().toString(36).slice(2, 10); }
@@ -2335,7 +2335,7 @@ function _bindCardEvents(body) {
   if (_selectMode) {
     body.querySelectorAll('.note-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.note-card-cb')) return; // checkbox handles itself
+        if (e.target.closest('.note-card-cb, a')) return; // checkbox handles itself; links open without toggling
         e.stopPropagation();
         tapToEditOrSelect(card);
       });
@@ -3070,7 +3070,7 @@ function _buildForm(note = null) {
       <input type="hidden" class="note-form-due" value="${note?.due_date || ''}" />
       <input type="hidden" class="note-form-repeat" value="${note?.repeat || 'none'}" />
     </div>
-    ${currentImageUrl && type !== 'draw' ? `<div class="note-form-image-wrap"><img class="note-form-image" src="${_esc(currentImageUrl)}" draggable="false" /><button class="note-form-image-rm" title="Remove">&times;</button></div>` : ''}
+    ${currentImageUrl && type !== 'draw' ? `<div class="note-form-image-wrap"><img class="note-form-image" src="${_esc(currentImageUrl)}" alt="" draggable="false" /><button class="note-form-image-rm" title="Remove" aria-label="Remove">&times;</button></div>` : ''}
     <div class="note-form-body">
       ${type === 'note'
         ? `<textarea class="note-form-content" placeholder="Take a note..." rows="4">${_esc(note?.content || '')}</textarea>`
@@ -3651,7 +3651,7 @@ function _buildForm(note = null) {
         form.querySelector('.note-form-image-wrap')?.remove();
         const wrap = document.createElement('div');
         wrap.className = 'note-form-image-wrap';
-        wrap.innerHTML = `<img class="note-form-image" draggable="false" /><button class="note-form-image-rm" title="Remove">&times;</button>`;
+        wrap.innerHTML = `<img class="note-form-image" alt="" draggable="false" /><button class="note-form-image-rm" title="Remove" aria-label="Remove">&times;</button>`;
         // Insert AFTER the whole header (a flex-row), not after the
         // title input itself — otherwise the image lands as a sibling
         // of the title inside the header and flex puts them side-by-side.
